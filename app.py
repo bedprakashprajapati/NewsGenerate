@@ -98,26 +98,26 @@ def generate_news_tweet():
 def manifest():
     """PWA manifest for Add to Home Screen functionality"""
     return jsonify({
-        "name": "News Tweet Generator",
-        "short_name": "NewsTweet",
+        "name": "Bharat Bulletin X",
+        "short_name": "BBX",
         "description": "Generate tweet-sized news summaries with images",
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#c5e41981",
-        "theme_color": "#1371e4",
+        "background_color": "#101827",   # dark blue like your app background
+        "theme_color": "#101827",
         "icons": [
             {
                 "src": "/static/icon1.png",
-                "sizes": "400x400",
+                "sizes": "192x192",
                 "type": "image/png"
             },
             {
                 "src": "/static/icon1.png",
-                "sizes": "400x400",
+                "sizes": "512x512",
                 "type": "image/png"
             }
         ]
-    })
+})
 
 @app.route('/sw.js')
 def service_worker():
