@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}News Tweet Generator - Choose Source{% endblock %}
+
+{% block content %}
+<header>
+    <h1>News Tweet</h1>
+    <p>Generate tweet-sized news with images</p>
+</header>
+
+<div class="source-grid">
+    {% for source in sources %}
+    <a href="/source/{{ source.id }}" class="source-btn" style="border-color: {{ source.color }}40;">
+        <span class="icon">📰</span>
+        <span>{{ source.name }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

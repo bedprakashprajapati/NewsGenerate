@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ source.name }} - News Tweet Generator{% endblock %}
+
+{% block content %}
+<a href="/" class="back-btn">
+    <span>←</span>
+    <span>Back</span>
+</a>
+
+<div class="source-header">
+    <div class="logo" style="background: {{ source.color }};">
+        {{ source.name[0] }}
+    </div>
+    <div class="info">
+        <h2>{{ source.name }}</h2>
+        <p>Select a category to generate tweet</p>
+    </div>
+</div>
+
+<div class="category-list" id="categoryList">
+    {% for cat in categories %}
+    <button class="category-btn" data-category="{{ cat.id }}">
+        <span class="icon">{{ cat.icon }}</span>
+        <span>{{ cat.name }}</span>
+    </button>
+    {% endfor %}
+</div>
+
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Fetching news and generating tweet...</p>
+</div>
+
+<div class="error-message" id="errorMessage">
+    <p id="errorText">An error occurred. Please try again.</p>
+    <button class="retry-btn" onclick="hideError()">Try Again</button>
+</div>
+
+<div class="result-container" id="resultContainer">
+    <div class="tweet-box">
+        <p class="tweet-text" id="tweetText"></p>
+        <p class="char-count"><span id="charCount">0</span>/270</p>
+    </div>
+    
+    <div class="image-container" id="imageContainer">
+        <img id="articleImage" src="" alt="Article image" onerror="handleImageError()">
+        <div class="image-placeholder" id="imagePlaceholder" style="display: none;">
+            No image available for this article
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="action-btn primary" id="copyTweetBtn" onclick="copyTweet()">
+            <span>📋</span>
+            <span>Copy Tweet</span>
+        </button>
+        <button class="action-btn secondary" id="copyImageBtn" onclick="copyImageUrl()">
+            <span>🖼️</span>
+            <span>Copy Image URL</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const sourceId = "{{ source.id }}";
+    let currentTweet = '';
+    let currentImageUrl = '';
+
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => generateTweet(btn.dataset.category));
+    });
+
+    async function generateTweet(category) {
+        showLoading();
+        hideError();
+        hideResult();
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    source_id: sourceId,
+                    category: category
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentTweet = data.tweet_text;
+                currentImageUrl = data.image_url || '';
+                
+                document.getElementById('tweetText').textContent = currentTweet;
+                document.getElementById('charCount').textContent = currentTweet.length;
+                
+                const img = document.getElementById('articleImage');
+                const placeholder = document.getElementById('imagePlaceholder');
+                
+                if (currentImageUrl) {
+                    img.src = currentImageUrl;
+                    img.style.display = 'block';
+                    placeholder.style.display = 'none';
+                } else {
+                    img.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                }
+                
+                showResult();
+            } else {
+                showError(data.error || 'Failed to generate tweet. Please try again.');
+            }
+        } catch (error) {
+            showError('Network error. Please check your connection and try again.');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function handleImageError() {
+        document.getElementById('articleImage').style.display = 'none';
+        document.getElementById('imagePlaceholder').style.display = 'flex';
+    }
+
+    async function copyTweet() {
+        try {
+            await navigator.clipboard.writeText(currentTweet);
+            const btn = document.getElementById('copyTweetBtn');
+            btn.classList.add('success');
+            btn.innerHTML = '<span>✓</span><span>Copied!</span>';
+            showToast('Tweet copied to clipboard!');
+            
+            setTimeout(() => {
+                btn.classList.remove('success');
+                btn.innerHTML = '<span>📋</span><span>Copy Tweet</span>';
+            }, 2000);
+        } catch (err) {
+            fallbackCopy(currentTweet);
+        }
+    }
+
+    async function copyImageUrl() {
+        if (!currentImageUrl) {
+            showToast('No image URL available');
+            return;
+        }
+        
+        try {
+            await navigator.clipboard.writeText(currentImageUrl);
+            const btn = document.getElementById('copyImageBtn');
+            btn.classList.add('success');
+            btn.innerHTML = '<span>✓</span><span>Copied!</span>';
+            showToast('Image URL copied!');
+            
+            setTimeout(() => {
+                btn.classList.remove('success');
+                btn.innerHTML = '<span>🖼️</span><span>Copy Image URL</span>';
+            }, 2000);
+        } catch (err) {
+            fallbackCopy(currentImageUrl);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Copied!');
+        } catch (err) {
+            showToast('Copy failed. Please copy manually.');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function showLoading() {
+        document.getElementById('loading').classList.add('show');
+        document.getElementById('categoryList').style.opacity = '0.5';
+        document.getElementById('categoryList').style.pointerEvents = 'none';
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('categoryList').style.opacity = '1';
+        document.getElementById('categoryList').style.pointerEvents = 'auto';
+    }
+
+    function showResult() {
+        document.getElementById('resultContainer').classList.add('show');
+    }
+
+    function hideResult() {
+        document.getElementById('resultContainer').classList.remove('show');
+    }
+
+    function showError(message) {
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('errorMessage').classList.add('show');
+    }
+
+    function hideError() {
+        document.getElementById('errorMessage').classList.remove('show');
+    }
+</script>
+{% endblock %}

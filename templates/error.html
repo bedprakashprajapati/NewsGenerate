@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error - News Tweet Generator{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Oops!</h1>
+    <p>Something went wrong</p>
+</header>
+
+<div class="error-message show" style="margin-top: 0;">
+    <p>{{ message }}</p>
+    <a href="/" class="retry-btn" style="display: inline-block; text-decoration: none;">Go Home</a>
+</div>
+{% endblock %}

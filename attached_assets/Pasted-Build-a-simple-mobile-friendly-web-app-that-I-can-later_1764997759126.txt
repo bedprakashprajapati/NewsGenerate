@@ -1,0 +1,124 @@
+Build a simple mobile-friendly web app that I can later deploy and use like an app on my phone. The core purpose is to generate a tweet-sized news post (maximum 270 characters) plus a related image, based on live news scraped from specific news channels.
+
+Core requirements
+Start by designing a clean, minimal home screen with a grid or list of news source buttons. Examples of sources:
+
+BBC
+
+BBC India
+
+Times of India
+
+Aaj Tak
+
+ANI
+
+CNN
+
+NDTV
+
+India Today
+
+ABP News
+
+Al Jazeera
+
+Make it easy to add or remove sources later in code.
+
+When I tap/click one source, open a second screen/interface dedicated to that source. On this screen, show buttons for news categories:
+
+“Generate New” (or “Random Latest”)
+
+“Top News”
+
+“Politics News”
+
+“Sports News”
+
+“Tech News”
+
+“International News”
+
+When I click any category button:
+
+Scrape the latest relevant news article from that specific source and category.
+
+From that article, extract:
+
+Headline
+
+Short description or first paragraph
+
+A thumbnail or main image URL that clearly matches that article.
+
+Generate tweet text:
+
+Create a tweet-style text summary of that article.
+
+Hard limit: max 270 characters, including hashtags if you add them.
+
+The text should be clear, readable English, and must accurately reflect the article content.
+
+Do not hallucinate facts; base the summary only on the scraped content.
+
+Display the result:
+
+Show:
+
+The generated tweet text in a text box.
+
+The related image (loaded from the scraped image URL) below or beside the text.
+
+Add a “Copy Tweet” button that copies only the tweet text to clipboard.
+
+Add a “Copy Image URL” button (or “Download Image” if easy) so I can easily use the same image on Twitter/X.
+
+Ensure the image you show is actually from that article and not a random image.
+
+Technical details:
+
+Use Python on the backend (Flask or FastAPI is fine).
+
+For scraping, use BeautifulSoup + requests, or any robust, free method that reliably:
+
+Gets the latest news.
+
+Gets the correct image for the article.
+
+Structure the scraping so that each news source and category has its own function or configuration, so I can add more sources later.
+
+Handle basic errors gracefully:
+
+If scraping fails or no image is found, show a clear error message and allow trying again.
+
+Make the frontend simple HTML/CSS/JS that works well on mobile (responsive design, large buttons).
+
+UX flow:
+
+Home screen → choose news source
+
+Source screen → choose category (Top, Politics, Sports, Tech, International, Generate New)
+
+App fetches latest article for that source + category, generates tweet text (<270 chars), fetches related image, and displays both with copy buttons.
+
+Code quality:
+
+Comment the code clearly:
+
+Where to change or add news sources.
+
+Where to adjust categories.
+
+Where the tweet length limit (270) is enforced.
+
+Provide instructions at the end of the code or in a README-style block:
+
+How to run this on Replit.
+
+Which environment variables or config values I must set (if any).
+
+How to open it in a browser and test.
+
+Ensure the app can be used as a PWA or is at least mobile-friendly so I can “Add to Home Screen” on my phone later.
+
+Produce the full backend and frontend code, plus any necessary setup instructions, so that I can copy-paste it into a Replit project and run it directly.
