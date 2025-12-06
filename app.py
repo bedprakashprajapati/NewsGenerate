@@ -107,12 +107,12 @@ def manifest():
         "theme_color": "#1371e4",
         "icons": [
             {
-                "src": "/static/static/1HjEfCWD_400x400.jpg",
+                "src": "/static/static/icon1.png",
                 "sizes": "192x192",
                 "type": "image/png"
             },
             {
-                "src": "/static/static/1HjEfCWD_400x400.jpg",
+                "src": "/static/static/icon1.png",
                 "sizes": "512x512",
                 "type": "image/png"
             }
