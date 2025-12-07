@@ -1,7 +1,7 @@
 """
 Tweet Generator Module
 ======================
-Uses OpenAI to generate tweet-sized summaries of news articles.
+Uses OpenAI to generate high-engagement X (Twitter) posts from news articles.
 
 TWEET LENGTH LIMIT:
 ------------------
@@ -32,7 +32,7 @@ def get_openai_client():
 
 def generate_tweet(headline, description='', source_name=''):
     """
-    Generate a tweet-style summary of a news article.
+    Generate a high-engagement tweet-style summary of a news article.
     
     Args:
         headline: The article headline
@@ -50,11 +50,10 @@ def generate_tweet(headline, description='', source_name=''):
     
     openai_client = get_openai_client()
     if not openai_client:
-        source_credit = f" 📸 Source: {source_name}" if source_name else ""
-        fallback = f"📰 {headline}{source_credit}"
+        # Fallback without OpenAI
+        fallback = f"📰 {headline}"
         if len(fallback) > MAX_TWEET_LENGTH:
-            available_length = MAX_TWEET_LENGTH - len(source_credit) - 6
-            fallback = f"📰 {headline[:available_length]}...{source_credit}"
+            fallback = f"📰 {headline[:MAX_TWEET_LENGTH - 6]}..."
         return fallback
     
     try:
@@ -62,40 +61,50 @@ def generate_tweet(headline, description='', source_name=''):
         if description:
             content_for_summary += f"\n\nDescription: {description}"
         
-        prompt = f"""Create a detailed, engaging tweet-sized news summary. CRITICAL REQUIREMENTS:
-1. LENGTH: The tweet MUST be between {MIN_TWEET_LENGTH} and {MAX_TWEET_LENGTH} characters. Count carefully!
-2. Write in clear, engaging English with proper grammar
-3. Be factual - expand on the headline with context and details from the description
-4. Include 1-2 relevant hashtags
-5. IMPORTANT: End the tweet with "📸 Source: {source_name}" to credit the news source
-6. Make it informative, shareable and newsworthy
-7. Do NOT add quotation marks around the tweet
-8. Use the full character limit - short tweets are NOT acceptable
+        prompt = f"""Rewrite the scraped news into a high-engagement X (Twitter) post following these rules:
 
-Article from {source_name}:
+1. Length must be {MIN_TWEET_LENGTH}–{MAX_TWEET_LENGTH} characters.
+2. Begin with a relevant emotional hook connected to the actual news topic.
+3. Use 1–3 emojis that fit the news context.
+4. Summarize the news using only facts present in the scraped text.
+5. Keep the tone conversational and impactful.
+6. End with a short question that encourages replies.
+7. Include scraped hashtags if present; do not invent new ones.
+8. Do not add any unrelated information, assumptions, fake drama, opinions, or extra facts.
+9. Output only the rewritten post—no explanations.
+10. Do NOT wrap the output in quotation marks.
+
+✅ Example of How It Would Transform:
+
+Scraped news:
+"Virat Kohli scores 102 in a crucial ODI, helping India seal series."
+
+Output:
+🔥 Virat Kohli delivers AGAIN! A superb 102 in a must-win ODI lifts India to a series win. His consistency right now is unreal 👑🇮🇳
+Is this his best ODI form in years?
+#ViratKohli #INDvAUS
+
+Now rewrite this news from {source_name}:
 {content_for_summary}
-
-Format example: "[News summary with context and details] #Hashtag1 #Hashtag2 📸 Source: {source_name}"
-
-Remember: The tweet MUST be between {MIN_TWEET_LENGTH}-{MAX_TWEET_LENGTH} characters. Add details to reach the minimum. Always end with the source credit.
 
 Generate ONLY the tweet text:"""
 
-        # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-        # do not change this unless explicitly requested by the user
+        # the newest OpenAI model is "gpt-4o" (as of Dec 2024)
+        # Change to "gpt-4-turbo" or "gpt-3.5-turbo" if you don't have access
         response = openai_client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
-                    "content": f"You are a professional news editor who creates detailed, engaging tweet summaries. Your tweets MUST be between {MIN_TWEET_LENGTH}-{MAX_TWEET_LENGTH} characters - never shorter. Include context, details, and hashtags. Never exceed {MAX_TWEET_LENGTH} characters. Never hallucinate facts."
+                    "content": f"You are an expert X (Twitter) content creator who rewrites news into viral, high-engagement posts. Your tweets MUST be between {MIN_TWEET_LENGTH}-{MAX_TWEET_LENGTH} characters. Use emotional hooks, conversational tone, relevant emojis, and end with engaging questions. Never hallucinate facts—use only what's in the scraped content."
                 },
                 {
                     "role": "user",
                     "content": prompt
                 }
             ],
-            max_completion_tokens=200
+            max_completion_tokens=150,
+            temperature=0.8
         )
         
         tweet = response.choices[0].message.content
@@ -104,6 +113,7 @@ Generate ONLY the tweet text:"""
         else:
             raise ValueError("Empty response from API")
         
+        # Enforce hard limit
         if len(tweet) > MAX_TWEET_LENGTH:
             tweet = tweet[:MAX_TWEET_LENGTH - 3].rsplit(' ', 1)[0] + '...'
         
@@ -111,9 +121,8 @@ Generate ONLY the tweet text:"""
         
     except Exception as e:
         print(f"Error generating tweet: {e}")
-        source_credit = f" 📸 Source: {source_name}" if source_name else ""
-        fallback = f"📰 {headline}{source_credit}"
+        # Simple fallback
+        fallback = f"📰 {headline}"
         if len(fallback) > MAX_TWEET_LENGTH:
-            available_length = MAX_TWEET_LENGTH - len(source_credit) - 6
-            fallback = f"📰 {headline[:available_length]}...{source_credit}"
+            fallback = f"📰 {headline[:MAX_TWEET_LENGTH - 6]}..."
         return fallback
