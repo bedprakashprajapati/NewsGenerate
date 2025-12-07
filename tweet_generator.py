@@ -1,12 +1,7 @@
 """
 Tweet Generator Module
 ======================
-Uses OpenAI to generate high-engagement X (Twitter) posts from news articles.
-
-TWEET LENGTH LIMIT:
-------------------
-The maximum tweet length is enforced here. Change MAX_TWEET_LENGTH below
-to adjust the character limit (currently set to 280 characters).
+Uses Perplexity API (or OpenAI) to generate high-engagement X (Twitter) posts.
 """
 
 import os
@@ -18,39 +13,35 @@ MIN_TWEET_LENGTH = 250
 client = None
 
 def get_openai_client():
-    """Get or create OpenAI client. Returns None if API key not set or invalid."""
+    """Get or create API client. Works with both OpenAI and Perplexity keys."""
     global client
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return None
-    if api_key.startswith('pplx-'):
-        print("Warning: Perplexity API key detected. Please use an OpenAI API key instead.")
-        return None
+    
     if client is None:
-        client = OpenAI(api_key=api_key)
+        # Check if it's a Perplexity key
+        if api_key.startswith('pplx-'):
+            # Use Perplexity API endpoint
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.perplexity.ai"
+            )
+        else:
+            # Use OpenAI API
+            client = OpenAI(api_key=api_key)
+    
     return client
 
 def generate_tweet(headline, description='', source_name=''):
     """
     Generate a high-engagement tweet-style summary of a news article.
-    
-    Args:
-        headline: The article headline
-        description: Optional article description/first paragraph
-        source_name: Name of the news source
-    
-    Returns:
-        Tweet text (between 250-280 characters)
-    
-    Note: The function enforces a hard limit of MAX_TWEET_LENGTH characters.
-    If generation fails, it falls back to a truncated headline.
     """
     if not headline:
         return "Breaking news! Check out the latest updates."
     
     openai_client = get_openai_client()
     if not openai_client:
-        # Fallback without OpenAI
         fallback = f"📰 {headline}"
         if len(fallback) > MAX_TWEET_LENGTH:
             fallback = f"📰 {headline[:MAX_TWEET_LENGTH - 6]}..."
@@ -74,13 +65,9 @@ def generate_tweet(headline, description='', source_name=''):
 9. Output only the rewritten post—no explanations.
 10. Do NOT wrap the output in quotation marks.
 
-✅ Example of How It Would Transform:
-
-Scraped news:
-"Virat Kohli scores 102 in a crucial ODI, helping India seal series."
-
-Output:
-🔥 Virat Kohli delivers AGAIN! A superb 102 in a must-win ODI lifts India to a series win. His consistency right now is unreal 👑🇮🇳
+✅ Example:
+Scraped: "Virat Kohli scores 102 in a crucial ODI, helping India seal series."
+Output: 🔥 Virat Kohli delivers AGAIN! A superb 102 in a must-win ODI lifts India to a series win. His consistency right now is unreal 👑🇮🇳
 Is this his best ODI form in years?
 #ViratKohli #INDvAUS
 
@@ -89,10 +76,18 @@ Now rewrite this news from {source_name}:
 
 Generate ONLY the tweet text:"""
 
-        # the newest OpenAI model is "gpt-4o" (as of Dec 2024)
-        # Change to "gpt-4-turbo" or "gpt-3.5-turbo" if you don't have access
+        # Detect which API and choose appropriate model
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        
+        if api_key.startswith('pplx-'):
+            # Use Perplexity's model (you can use Claude, GPT-4, etc.)
+            model = "llama-3.1-sonar-large-128k-online"  # or "claude-3.5-sonnet" or "gpt-4o"
+        else:
+            # Use OpenAI's model
+            model = "gpt-4o"
+        
         response = openai_client.chat.completions.create(
-            model="gpt-4o",
+            model=model,
             messages=[
                 {
                     "role": "system",
@@ -103,7 +98,7 @@ Generate ONLY the tweet text:"""
                     "content": prompt
                 }
             ],
-            max_completion_tokens=150,
+            max_tokens=150,
             temperature=0.8
         )
         
@@ -121,7 +116,6 @@ Generate ONLY the tweet text:"""
         
     except Exception as e:
         print(f"Error generating tweet: {e}")
-        # Simple fallback
         fallback = f"📰 {headline}"
         if len(fallback) > MAX_TWEET_LENGTH:
             fallback = f"📰 {headline[:MAX_TWEET_LENGTH - 6]}..."
