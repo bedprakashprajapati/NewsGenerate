@@ -81,7 +81,7 @@ Generate ONLY the tweet text:"""
         
         if api_key.startswith('pplx-'):
             # Use Perplexity's model (you can use Claude, GPT-4, etc.)
-            model = "llama-3.1-sonar-large-128k-online"  # or "claude-3.5-sonnet" or "gpt-4o"
+            model = "sonar"  # or "claude-3.5-sonnet" or "gpt-4o"
         else:
             # Use OpenAI's model
             model = "gpt-4o"
